@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PinkQuill — Discover Your Next Favorite Book</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  
+
+  <style>
+       
+    :root {
+      --pink-main: #fce4ec;
+      --pink-mid: #f8bbd0;
+      --pink-deep: #e91e63;
+      --pink-soft: #fdf0f4;
+      --dark: #1a0a0f;
+      --text: #3d1a27;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background-color: var(--pink-soft);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ─── PRELOADER ─── */
+    #preloader {
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(135deg, #fce4ec 0% );
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+    #preloader.hidden { opacity: 0; visibility: hidden; }
+
+    .book-loader {
+      width: 80px; height: 60px; position: relative; margin-bottom: 32px;
+    }
+    .book-loader .cover {
+      width: 80px; height: 60px;
+      background: linear-gradient(135deg, #e91e63, #f06292);
+      border-radius: 4px 12px 12px 4px;
+      position: absolute;
+      transform-origin: left center;
+      animation: bookFlip 1.8s ease-in-out infinite;
+      box-shadow: 4px 4px 16px rgba(233,30,99,0.4);
+    }
+    .book-loader .spine {
+      width: 10px; height: 60px;
+      background: #c2185b;
+      border-radius: 4px 0 0 4px;
+      position: absolute; left: 0;
+    }
+    .book-loader .page {
+      width: 66px; height: 52px;
+      background: #fff8fb;
+      border-radius: 2px 10px 10px 2px;
+      position: absolute; left: 10px; top: 4px;
+      transform-origin: left center;
+      animation: pageTurn 1.8s ease-in-out infinite;
+    }
+    .book-loader .page::before {
+      content: '';
+      display: block; width: 40px; height: 2px;
+      background: #f8bbd0; border-radius: 2px;
+      position: absolute; top: 14px; left: 8px;
+      box-shadow: 0 8px 0 #f8bbd0, 0 16px 0 #f8bbd0, 0 24px 0 #f8bbd0;
+    }
+    @keyframes bookFlip {
+      0%, 100% { transform: rotateY(0deg); }
+      50% { transform: rotateY(-25deg); }
+    }
+    @keyframes pageTurn {
+      0%, 100% { transform: rotateY(0deg); }
+      50% { transform: rotateY(-45deg); background: #fce4ec; }
+    }
+
+    .loader-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.25rem; font-style: italic; color: #c2185b;
+      letter-spacing: 0.05em;
+    }
+    .loader-dots span {
+      display: inline-block; width: 6px; height: 6px;
+      background: #e91e63; border-radius: 50%; margin: 0 3px;
+      animation: dotBounce 1.2s ease-in-out infinite;
+    }
+    .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dotBounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40% { transform: translateY(-8px); opacity: 1; }
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #fce4ec; }
+    ::-webkit-scrollbar-thumb { background: #f48fb1; border-radius: 10px; }
+
+    /* ─── NAVBAR ─── */
+    #navbar {
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(253,240,244,0.85);
+      border-bottom: 1px solid rgba(244,143,177,0.25);
+      transition: box-shadow 0.3s;
+    }
+    #navbar.scrolled { box-shadow: 0 4px 24px rgba(233,30,99,0.1); }
+
+    .nav-link {
+      position: relative; font-size: 0.875rem; font-weight: 500;
+      color: var(--text); text-decoration: none;
+      padding: 4px 0; transition: color 0.2s;
+    }
+    .nav-link::after {
+      content: ''; position: absolute; bottom: -2px; left: 0;
+      width: 0; height: 2px;
+      background: var(--pink-deep); border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    .nav-link:hover { color: var(--pink-deep); }
+    .nav-link:hover::after { width: 100%; }
+
+    /* ─── HERO ─── */
+    .hero-bg {
+      background: radial-gradient( #fce4ec 0%,);
+      position: relative; overflow: hidden;
+    }
+    .hero-blob {
+      position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.5;
+      animation: blobFloat 6s ease-in-out infinite;
+    }
+    @keyframes blobFloat {
+      0%, 100% { transform: translate(0,0) scale(1); }
+      33% { transform: translate(20px,-20px) scale(1.05); }
+      66% { transform: translate(-15px,15px) scale(0.97); }
+    }
+
+    .float-book {
+      animation: floatY 3s ease-in-out infinite;
+      filter: drop-shadow(0 12px 24px rgba(233,30,99,0.25));
+    }
+    .float-book:nth-child(2) { animation-delay: 0.5s; animation-duration: 3.5s; }
+    .float-book:nth-child(3) { animation-delay: 1s; animation-duration: 4s; }
+    @keyframes floatY {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-16px) rotate(2deg); }
+    }
+
+    /* ─── BOOK CARD ─── */
+    .book-card {
+      background: white; border-radius: 20px;
+      overflow: hidden; transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow: 0 4px 20px rgba(233,30,99,0.08);
+      cursor: pointer; position: relative;
+    }
+    .book-card:hover {
+      transform: translateY(-12px) scale(1.02);
+      box-shadow: 0 20px 48px rgba(233,30,99,0.2);
+    }
+    .book-card .book-img {
+      overflow: hidden; background: var(--pink-main);
+      height: 220px; display: flex; align-items: center; justify-content: center;
+    }
+    .book-card .book-img img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+    .book-card:hover .book-img img { transform: scale(1.1); }
+
+    .badge {
+      position: absolute; top: 12px; right: 12px;
+      background: var(--pink-deep); color: white;
+      font-size: 0.65rem; font-weight: 600; letter-spacing: 0.05em;
+      padding: 4px 10px; border-radius: 20px; text-transform: uppercase;
+    }
+
+    /* ─── BUTTON ─── */
+    .btn-primary {
+      background: linear-gradient(135deg, #e91e63, #f06292);
+      color: white; border: none; border-radius: 50px;
+      padding: 12px 28px; font-family: 'DM Sans', sans-serif;
+      font-weight: 600; font-size: 0.9rem; cursor: pointer;
+      transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;
+      box-shadow: 0 4px 16px rgba(233,30,99,0.35);
+      text-decoration: none;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(233,30,99,0.45);
+      background: linear-gradient(135deg, #c2185b, #e91e63);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--pink-deep); border: 2px solid var(--pink-deep);
+      border-radius: 50px; padding: 10px 28px;
+      font-family: 'DM Sans', sans-serif; font-weight: 600;
+      font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease;
+      display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+    }
+    .btn-outline:hover {
+      background: var(--pink-deep); color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(233,30,99,0.3);
+    }
+
+    /* ─── ADD TO CART ─── */
+    .add-cart-btn {
+      background: linear-gradient(135deg, #e91e63, #f06292);
+      color: white; border: none; border-radius: 12px;
+      padding: 10px 20px; font-weight: 600; font-size: 0.82rem;
+      cursor: pointer; transition: all 0.3s ease;
+      display: flex; align-items: center; gap: 6px; width: 100%;
+      justify-content: center;
+    }
+    .add-cart-btn:hover {
+      background: linear-gradient(135deg, #c2185b, #e91e63);
+      transform: scale(1.03);
+    }
+    .add-cart-btn.added {
+      background: linear-gradient(135deg, #4caf50, #66bb6a);
+      animation: cartPop 0.4s ease;
+    }
+    @keyframes cartPop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    /* ─── CATEGORY CARD ─── */
+    .cat-card {
+      background: white; border-radius: 20px; padding: 28px 20px;
+      text-align: center; transition: all 0.3s ease;
+      border: 2px solid transparent; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(233,30,99,0.06);
+    }
+    .cat-card:hover {
+      border-color: var(--pink-mid);
+      transform: translateY(-6px);
+      box-shadow: 0 16px 40px rgba(233,30,99,0.15);
+    }
+    .cat-card.active {
+      border-color: var(--pink-deep);
+      background: linear-gradient(135deg, #fce4ec, #fff);
+    }
+    .cat-icon {
+      width: 60px; height: 60px; border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px; font-size: 1.6rem;
+      background: linear-gradient(135deg, #fce4ec, #fdf0f4);
+      transition: transform 0.3s ease;
+    }
+    .cat-card:hover .cat-icon { transform: scale(1.15) rotate(5deg); }
+
+    /* ─── CAROUSEL ─── */
+    .carousel-container { overflow: hidden; }
+    .carousel-track {
+      display: flex; gap: 24px; transition: transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
+    }
+    .carousel-item {
+      min-width: 220px; background: white; border-radius: 20px;
+      overflow: hidden; flex-shrink: 0;
+      box-shadow: 0 4px 20px rgba(233,30,99,0.08);
+      transition: all 0.3s ease;
+    }
+    .carousel-item:hover { transform: translateY(-8px); box-shadow: 0 16px 40px rgba(233,30,99,0.18); }
+
+    .carousel-btn {
+      width: 44px; height: 44px; border-radius: 50%; border: none;
+      background: white; color: var(--pink-deep); cursor: pointer;
+      box-shadow: 0 4px 16px rgba(233,30,99,0.15);
+      font-size: 1rem; display: flex; align-items: center; justify-content: center;
+      transition: all 0.3s ease; flex-shrink: 0;
+    }
+    .carousel-btn:hover {
+      background: var(--pink-deep); color: white;
+      box-shadow: 0 8px 24px rgba(233,30,99,0.3);
+    }
+
+    /* ─── WHY US ─── */
+    .why-card {
+      background: white; border-radius: 24px; padding: 32px 24px;
+      text-align: center; transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(233,30,99,0.06);
+    }
+    .why-card:hover { transform: translateY(-8px); box-shadow: 0 20px 48px rgba(233,30,99,0.15); }
+    .why-icon {
+      width: 70px; height: 70px; border-radius: 20px; margin: 0 auto 20px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.8rem;
+      background: linear-gradient(135deg, #fce4ec, #fdf0f4);
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .why-card:hover .why-icon { transform: scale(1.2) rotate(-6deg); }
+
+    /* ─── NEWSLETTER ─── */
+    .newsletter-bg {
+      background: linear-gradient(135deg, #e91e63 0%, #f06292 40%, #f48fb1 100%);
+      position: relative; overflow: hidden;
+    }
+    .newsletter-bg::before {
+      content: ''; position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .newsletter-input {
+      background: white; border: none; border-radius: 50px 0 0 50px;
+      padding: 14px 24px; font-size: 0.9rem; outline: none;
+      flex: 1; font-family: 'DM Sans', sans-serif; color: var(--text);
+    }
+    .newsletter-btn {
+      background: var(--dark); color: white; border: none;
+      border-radius: 0 50px 50px 0; padding: 14px 28px;
+      font-weight: 700; font-size: 0.9rem; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.3s;
+    }
+    .newsletter-btn:hover { background: #3d1a27; }
+
+    /* ─── CART BADGE ─── */
+    #cart-count {
+      position: absolute; top: -6px; right: -6px;
+      background: var(--pink-deep); color: white;
+      width: 18px; height: 18px; border-radius: 50%;
+      font-size: 0.65rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    #cart-count.pop { animation: countPop 0.4s ease; }
+    @keyframes countPop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.5); }
+      100% { transform: scale(1); }
+    }
+
+    /* ─── SEARCH ─── */
+    .search-container {
+      position: relative; transition: all 0.3s ease;
+    }
+    .search-input {
+      background: rgba(252,228,236,0.6); border: 1.5px solid transparent;
+      border-radius: 50px; padding: 8px 16px 8px 38px;
+      font-size: 0.85rem; outline: none; transition: all 0.3s; width: 180px;
+      font-family: 'DM Sans', sans-serif; color: var(--text);
+    }
+    .search-input:focus {
+      border-color: var(--pink-mid); width: 220px;
+      background: white; box-shadow: 0 4px 16px rgba(233,30,99,0.1);
+    }
+    .search-icon {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: #f06292; font-size: 0.8rem; pointer-events: none;
+    }
+
+    /* ─── MOBILE MENU ─── */
+    #mobile-menu {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
+      opacity: 0;
+    }
+    #mobile-menu.open { max-height: 400px; opacity: 1; }
+
+    /* ─── REVEAL ANIMATION ─── */
+    .reveal {
+      opacity: 0; transform: translateY(40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-left {
+      opacity: 0; transform: translateX(-40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal-left.visible { opacity: 1; transform: translateX(0); }
+    .reveal-right {
+      opacity: 0; transform: translateX(40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal-right.visible { opacity: 1; transform: translateX(0); }
+
+    /* ─── SECTION HEADINGS ─── */
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700; color: var(--dark); line-height: 1.15;
+    }
+    .section-label {
+      display: inline-block; font-size: 0.78rem; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--pink-deep); margin-bottom: 10px;
+    }
+    .divider {
+      width: 48px; height: 3px; background: linear-gradient(90deg, #e91e63, #f48fb1);
+      border-radius: 2px; margin: 12px 0 8px;
+    }
+
+    /* ─── RATING STARS ─── */
+    .stars { color: #f59e0b; font-size: 0.75rem; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--dark);
+      color: rgba(255,255,255,0.75);
+    }
+    .footer-link {
+      color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+    .footer-link:hover { color: #f48fb1; }
+    .social-btn {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: rgba(255,255,255,0.08); display: flex;
+      align-items: center; justify-content: center; color: rgba(255,255,255,0.6);
+      text-decoration: none; transition: all 0.3s; font-size: 0.9rem;
+    }
+    .social-btn:hover { background: var(--pink-deep); color: white; transform: translateY(-3px); }
+
+    /* ─── TOAST ─── */
+    #toast {
+      position: fixed; bottom: 32px; right: 32px; z-index: 9998;
+      background: linear-gradient(135deg, #e91e63, #f06292);
+      color: white; padding: 14px 22px; border-radius: 16px;
+      font-weight: 600; font-size: 0.88rem;
+      box-shadow: 0 8px 32px rgba(233,30,99,0.35);
+      transform: translateY(100px); opacity: 0;
+      transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      display: flex; align-items: center; gap: 10px;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+  
+
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Cormorant Garamond', 'serif'],
+            body: ['DM Sans', 'sans-serif'],
+          },
+          colors: {
+            pink: {
+              50: '#fff0f5',
+              100: '#ffe1ec',
+              200: '#ffc6d9',
+              300: '#ff9dbf',
+              400: '#ff6699',
+              500: '#ff3375',
+              600: '#f0105a',
+              700: '#cc0047',
+              800: '#a8003d',
+              900: '#8c0038',
+            },
+          },
+        },
+      },
+    }
+  </script>
+ 
+</head>
+<body>
+
+<!-- ═══════════════════════ PRELOADER ═══════════════════════ -->
+<div id="preloader">
+  <div class="book-loader">
+    <div class="spine"></div>
+    <div class="page"></div>
+    <div class="cover"></div>
+  </div>
+  <p class="loader-text">Loading Your Next Favorite Book</p>
+  <div class="loader-dots mt-3">
+    <span></span><span></span><span></span>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TOAST ═══════════════════════ -->
+<div id="toast">
+  <i class="fas fa-check-circle"></i>
+  <span id="toast-msg">Added to cart!</span>
+</div>
+
+<!-- ═══════════════════════ NAVBAR ════════════════════---->
+<nav id="navbar">
+  <div class="max-w-7xl mx-auto px-5 py-4">
+    <div class="flex items-center justify-between gap-4">
+
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-2 flex-shrink-0">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#e91e63,#f48fb1)">
+          <i class="fas fa-feather-alt text-white text-sm"></i>
+        </div>
+        <span style="font-family:'Cormorant Garamond',serif; font-size:1.45rem; font-weight:700; color:var(--dark)">
+          Pink<span style="color:#e91e63">Quill</span>
+        </span>
+      </a>
+
+      <!-- Desktop Nav -->
+      <div class="hidden md:flex items-center gap-7">
+        <a href="#home" class="nav-link">Home</a>
+        <a href="#books" class="nav-link">Books</a>
+        <a href="#categories" class="nav-link">Categories</a>
+        <a href="#bestsellers" class="nav-link">Best Sellers</a>
+        <a href="#about" class="nav-link">About</a>
+        <a href="#contact" class="nav-link">Contact</a>
+      </div>
+
+      <!-- Right Icons -->
+      <div class="flex items-center gap-3">
+        <!-- Search -->
+        <div class="search-container hidden sm:block">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" id="search-input" class="search-input" placeholder="Search books..." />
+        </div>
+
+        <!-- Cart -->
+        <button class="relative p-2 rounded-full hover:bg-pink-100 transition-colors" style="color:var(--text)" onclick="toggleCart()">
+          <i class="fas fa-shopping-bag text-lg"></i>
+          <span id="cart-count" class="hidden">0</span>
+        </button>
+
+        <!-- Mobile Hamburger -->
+        <button id="hamburger" class="md:hidden p-2 rounded-lg hover:bg-pink-100 transition-colors" style="color:var(--text)" onclick="toggleMenu()">
+          <i class="fas fa-bars text-lg"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu">
+      <div class="py-4 flex flex-col gap-1 border-t mt-4" style="border-color:rgba(244,143,177,0.3)">
+        <a href="#home" class="block px-4 py-3 rounded-xl hover:bg-pink-100 text-sm font-medium transition-colors" onclick="toggleMenu()">Home</a>
+        <a href="#books" class="block px-4 py-3 rounded-xl hover:bg-pink-100 text-sm font-medium transition-colors" onclick="toggleMenu()">Books</a>
+        <a href="#categories" class="block px-4 py-3 rounded-xl hover:bg-pink-100 text-sm font-medium transition-colors" onclick="toggleMenu()">Categories</a>
+        <a href="#bestsellers" class="block px-4 py-3 rounded-xl hover:bg-pink-100 text-sm font-medium transition-colors" onclick="toggleMenu()">Best Sellers</a>
+        <a href="#about" class="block px-4 py-3 rounded-xl hover:bg-pink-100 text-sm font-medium transition-colors" onclick="toggleMenu()">About</a>
+        <a href="#contact" class="block px-4 py-3 rounded-xl hover:bg-pink-100 text-sm font-medium transition-colors" onclick="toggleMenu()">Contact</a>
+        <!-- Mobile search -->
+        <div class="relative mt-2 px-4">
+          <i class="fas fa-search absolute left-7 top-1/2 -translate-y-1/2 text-pink-400 text-sm"></i>
+          <input type="text" placeholder="Search books..." class="w-full rounded-full py-2.5 pl-9 pr-4 text-sm outline-none" style="background:#fce4ec; border:1.5px solid transparent; font-family:'DM Sans',sans-serif" />
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<section id="home" class="hero-bg min-h-screen flex items-center relative" style="padding: 80px 20px">
+  <!-- Blobs -->
+  <div class="hero-blob w-96 h-96" style="background:#e0cad1; top:-100px; right:-80px"></div>
+  <div class="hero-blob w-64 h-64" style="background:#e0cad1; bottom:-50px; left:-60px; animation-delay:2s"></div>
+
+  <div class="max-w-7xl mx-auto w-full">
+    <div class="flex flex-col lg:flex-row items-center gap-14">
+
+      <!-- Text -->
+      <div class="flex-1 text-center lg:text-left reveal-left">
+        <span class="section-label">✦ Welcome to PinkQuill</span>
+        <h1 style="font-family:'Cormorant Garamond',serif; font-size:clamp(3rem,7vw,5.5rem); font-weight:700; line-height:1.05; color:var(--dark)">
+          Discover Your<br/>
+          <em style="color:#e91e63; font-style:italic">Next Favorite</em><br/>
+          Book
+        </h1>
+        <p class="mt-6 text-base leading-relaxed max-w-lg mx-auto lg:mx-0" style="color:#7a4055; font-size:1.05rem">
+          Explore thousands of handpicked titles across every genre. From timeless classics to contemporary bestsellers — your perfect read is just a page away.
+        </p>
+        <div class="flex flex-wrap gap-4 mt-10 justify-center lg:justify-start">
+          <a href="#books" class="btn-primary">
+            <i class="fas fa-book-open"></i> Browse Books
+          </a>
+          <a href="#bestsellers" class="btn-outline">
+            <i class="fas fa-star"></i> Best Sellers
+          </a>
+        </div>
+        <!-- Stats -->
+        <div class="flex gap-10 mt-12 justify-center lg:justify-start">
+          <div>
+            <div style="font-family:'Cormorant Garamond',serif; font-size:2.2rem; font-weight:700; color:var(--dark)">50K+</div>
+            <div style="font-size:0.8rem; color:#a06070; font-weight:500">Titles</div>
+          </div>
+          <div style="width:1px; background:rgba(244,143,177,0.4)"></div>
+          <div>
+            <div style="font-family:'Cormorant Garamond',serif; font-size:2.2rem; font-weight:700; color:var(--dark)">200K+</div>
+            <div style="font-size:0.8rem; color:#a06070; font-weight:500">Readers</div>
+          </div>
+          <div style="width:1px; background:rgba(244,143,177,0.4)"></div>
+          <div>
+            <div style="font-family:'Cormorant Garamond',serif; font-size:2.2rem; font-weight:700; color:var(--dark)">4.9★</div>
+            <div style="font-size:0.8rem; color:#a06070; font-weight:500">Rating</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Books Illustration -->
+      <div class="flex-1 flex items-center justify-center relative min-h-[420px] reveal-right">
+        <!-- Main hero illustration -->
+        <div class="relative w-72 h-80 mx-auto">
+          <!-- Big book -->
+          <div class="float-book absolute" style="left:40px; top:20px; z-index:3">
+            <div style="width:160px; height:220px; background:linear-gradient(135deg,#e91e63,#f48fb1); border-radius:6px 16px 16px 6px; box-shadow:6px 8px 32px rgba(233,30,99,0.4); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px">
+              <div style="width:8px; height:140px; background:rgba(0,0,0,0.2); position:absolute; left:0; border-radius:4px 0 0 4px"></div>
+              <i class="fas fa-feather-alt text-white text-4xl opacity-80"></i>
+              <div style="color:rgba(255,255,255,0.9); font-family:'Cormorant Garamond',serif; font-size:0.9rem; font-style:italic; text-align:center; padding:0 16px">The Art of Stories</div>
+            </div>
+          </div>
+          <!-- Small book 1 -->
+          <div class="float-book absolute" style="right:20px; top:10px; z-index:2; transform:rotate(12deg)">
+            <div style="width:90px; height:130px; background:linear-gradient(135deg,#f06292,#fce4ec); border-radius:4px 10px 10px 4px; box-shadow:4px 6px 20px rgba(233,30,99,0.25)">
+              <div style="width:6px; height:100%; background:rgba(0,0,0,0.1); position:absolute; left:0; border-radius:4px 0 0 4px"></div>
+            </div>
+          </div>
+          <!-- Small book 2 -->
+          <div class="float-book absolute" style="right:10px; bottom:40px; z-index:2; transform:rotate(-8deg)">
+            <div style="width:80px; height:110px; background:linear-gradient(135deg,#ad1457,#e91e63); border-radius:4px 10px 10px 4px; box-shadow:4px 6px 20px rgba(173,20,87,0.3)">
+              <div style="width:6px; height:100%; background:rgba(0,0,0,0.15); position:absolute; left:0; border-radius:4px 0 0 4px"></div>
+            </div>
+          </div>
+          <!-- Circle deco -->
+          <div style="position:absolute; bottom:0; left:0; width:200px; height:200px; background:rgba(248,187,208,0.35); border-radius:50%; z-index:1; filter:blur(20px)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ FEATURED BOOKS ═══════════════════════ -->
+<section id="books" class="py-24 px-5" style="background:white">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-14 reveal">
+      <span class="section-label">✦ Handpicked For You</span>
+      <h2 class="section-title">Featured Books</h2>
+      <div class="divider mx-auto"></div>
+      <p class="mt-4 text-sm max-w-md mx-auto" style="color:#a06070">Carefully curated titles that readers are loving right now</p>
+    </div>
+
+    <!-- Filter buttons -->
+    <div class="flex flex-wrap gap-3 justify-center mb-10 reveal" id="filter-btns">
+      <button class="filter-btn active px-5 py-2 rounded-full text-sm font-600 transition-all" style="background:var(--pink-deep); color:white" data-filter="all">All Books</button>
+      <button class="filter-btn px-5 py-2 rounded-full text-sm font-medium transition-all border" style="border-color:#f8bbd0; color:var(--text)" data-filter="fiction">Fiction</button>
+      <button class="filter-btn px-5 py-2 rounded-full text-sm font-medium transition-all border" style="border-color:#f8bbd0; color:var(--text)" data-filter="technology">Technology</button>
+      <button class="filter-btn px-5 py-2 rounded-full text-sm font-medium transition-all border" style="border-color:#f8bbd0; color:var(--text)" data-filter="self-dev">Self Dev</button>
+      <button class="filter-btn px-5 py-2 rounded-full text-sm font-medium transition-all border" style="border-color:#f8bbd0; color:var(--text)" data-filter="romance">Romance</button>
+    </div>
+
+    <!-- Books Grid -->
+    <div id="books-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <!-- Cards injected by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ CATEGORIES ═══════════════════════ -->
+<section id="categories" class="py-24 px-5" style="background:var(--pink-soft)">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-14 reveal">
+      <span class="section-label">✦ Explore</span>
+      <h2 class="section-title">Browse by Category</h2>
+      <div class="divider mx-auto"></div>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
+      <div class="cat-card reveal active" data-cat="fiction" onclick="filterByCategory('fiction')">
+        <div class="cat-icon">📖</div>
+        <h3 class="font-semibold text-sm" style="color:var(--dark)">Fiction</h3>
+        <p class="text-xs mt-1" style="color:#a06070">1,240 books</p>
+      </div>
+      <div class="cat-card reveal" style="transition-delay:0.1s" data-cat="technology" onclick="filterByCategory('technology')">
+        <div class="cat-icon">💻</div>
+        <h3 class="font-semibold text-sm" style="color:var(--dark)">Technology</h3>
+        <p class="text-xs mt-1" style="color:#a06070">890 books</p>
+      </div>
+      <div class="cat-card reveal" style="transition-delay:0.15s" data-cat="self-dev" onclick="filterByCategory('self-dev')">
+        <div class="cat-icon">🌱</div>
+        <h3 class="font-semibold text-sm" style="color:var(--dark)">Self Dev</h3>
+        <p class="text-xs mt-1" style="color:#a06070">670 books</p>
+      </div>
+      <div class="cat-card reveal" style="transition-delay:0.2s" data-cat="romance" onclick="filterByCategory('romance')">
+        <div class="cat-icon">💕</div>
+        <h3 class="font-semibold text-sm" style="color:var(--dark)">Romance</h3>
+        <p class="text-xs mt-1" style="color:#a06070">540 books</p>
+      </div>
+      <div class="cat-card reveal" style="transition-delay:0.25s" data-cat="education" onclick="filterByCategory('education')">
+        <div class="cat-icon">🎓</div>
+        <h3 class="font-semibold text-sm" style="color:var(--dark)">Education</h3>
+        <p class="text-xs mt-1" style="color:#a06070">1,100 books</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ BEST SELLERS ═══════════════════════ -->
+<section id="bestsellers" class="py-24 px-5" style="background:white">
+  <div class="max-w-7xl mx-auto">
+    <div class="flex items-end justify-between mb-12">
+      <div class="reveal-left">
+        <span class="section-label">✦ Top Picks</span>
+        <h2 class="section-title">Best Sellers</h2>
+        <div class="divider"></div>
+      </div>
+      <div class="flex gap-3 reveal-right">
+        <button class="carousel-btn" id="prev-btn"><i class="fas fa-chevron-left"></i></button>
+        <button class="carousel-btn" id="next-btn"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+
+    <div class="carousel-container reveal">
+      <div class="carousel-track" id="carousel-track">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ WHY CHOOSE US ═══════════════════════ -->
+<section id="about" class="py-24 px-5" style="background:var(--pink-soft)">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-14 reveal">
+      <span class="section-label">✦ Our Promise</span>
+      <h2 class="section-title">Why Choose PinkQuill</h2>
+      <div class="divider mx-auto"></div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="why-card reveal">
+        <div class="why-icon">📚</div>
+        <h3 class="font-semibold text-base mb-2" style="color:var(--dark)">Vast Collection</h3>
+        <p class="text-sm leading-relaxed" style="color:#a06070">Over 50,000 titles spanning every genre imaginable — from poetry to programming.</p>
+      </div>
+      <div class="why-card reveal" style="transition-delay:0.1s">
+        <div class="why-icon">💰</div>
+        <h3 class="font-semibold text-base mb-2" style="color:var(--dark)">Best Prices</h3>
+        <p class="text-sm leading-relaxed" style="color:#a06070">Competitive pricing and exclusive member discounts make reading affordable for everyone.</p>
+      </div>
+      <div class="why-card reveal" style="transition-delay:0.2s">
+        <div class="why-icon">🚚</div>
+        <h3 class="font-semibold text-base mb-2" style="color:var(--dark)">Fast Delivery</h3>
+        <p class="text-sm leading-relaxed" style="color:#a06070">Free shipping on orders over $35. Express delivery options available nationwide.</p>
+      </div>
+      <div class="why-card reveal" style="transition-delay:0.3s">
+        <div class="why-icon">🔒</div>
+        <h3 class="font-semibold text-base mb-2" style="color:var(--dark)">Secure Payment</h3>
+        <p class="text-sm leading-relaxed" style="color:#a06070">256-bit SSL encryption and trusted payment gateways keep your transactions safe.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ NEWSLETTER ═══════════════════════ -->
+<section class="newsletter-bg py-20 px-5 relative">
+  <div class="max-w-2xl mx-auto text-center relative z-10 reveal">
+    <span style="font-size:0.78rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.75)">✦ Stay Updated</span>
+    <h2 style="font-family:'Cormorant Garamond',serif; font-size:clamp(2rem,4vw,2.8rem); font-weight:700; color:white; margin-top:10px; line-height:1.15">
+      Get Book Recommendations<br/>Delivered to You
+    </h2>
+    <p class="mt-4 text-sm" style="color:rgba(255,255,255,0.8)">Join 200,000+ book lovers. Get curated picks, exclusive deals, and author spotlights — weekly.</p>
+    <div class="flex mt-8 max-w-md mx-auto overflow-hidden rounded-full shadow-xl">
+      <input type="email" id="newsletter-email" class="newsletter-input" placeholder="Enter your email address" />
+      <button class="newsletter-btn" onclick="subscribeNewsletter()">Subscribe</button>
+    </div>
+    <p class="mt-4 text-xs" style="color:rgba(255,255,255,0.55)">No spam. Unsubscribe anytime.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════ CONTACT ═══════════════════════ -->
+<section id="contact" class="py-24 px-5" style="background:white">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-14 reveal">
+      <span class="section-label">✦ Get In Touch</span>
+      <h2 class="section-title">Contact Us</h2>
+      <div class="divider mx-auto"></div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+      <div class="reveal-left">
+        <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:600; color:var(--dark)" class="mb-4">We'd love to hear from you</h3>
+        <p class="text-sm leading-relaxed mb-6" style="color:#a06070">Whether you need book recommendations, have questions about an order, or want to partner with us — our team is here to help.</p>
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#fce4ec; color:#e91e63">
+              <i class="fas fa-envelope text-sm"></i>
+            </div>
+            <div>
+              <div class="text-xs font-semibold" style="color:#a06070">Email</div>
+              <div class="text-sm font-medium" style="color:var(--dark)">hello@pinkquill.com</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#fce4ec; color:#e91e63">
+              <i class="fas fa-phone text-sm"></i>
+            </div>
+            <div>
+              <div class="text-xs font-semibold" style="color:#a06070">Phone</div>
+              <div class="text-sm font-medium" style="color:var(--dark)">+1 (800) 746-5842</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#fce4ec; color:#e91e63">
+              <i class="fas fa-map-marker-alt text-sm"></i>
+            </div>
+            <div>
+              <div class="text-xs font-semibold" style="color:#a06070">Address</div>
+              <div class="text-sm font-medium" style="color:var(--dark)">42 Quill Street, New York, NY 10001</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="reveal-right">
+        <form onsubmit="return false" class="flex flex-col gap-4">
+          <input type="text" placeholder="Your Name" class="rounded-2xl px-5 py-3.5 text-sm outline-none border transition-all" style="border-color:#f8bbd0; font-family:'DM Sans',sans-serif; background:#fdf9fb" onfocus="this.style.borderColor='#e91e63'; this.style.boxShadow='0 0 0 3px rgba(233,30,99,0.1)'" onblur="this.style.borderColor='#f8bbd0'; this.style.boxShadow='none'" />
+          <input type="email" placeholder="Your Email" class="rounded-2xl px-5 py-3.5 text-sm outline-none border transition-all" style="border-color:#f8bbd0; font-family:'DM Sans',sans-serif; background:#fdf9fb" onfocus="this.style.borderColor='#e91e63'; this.style.boxShadow='0 0 0 3px rgba(233,30,99,0.1)'" onblur="this.style.borderColor='#f8bbd0'; this.style.boxShadow='none'" />
+          <textarea rows="4" placeholder="Your Message" class="rounded-2xl px-5 py-3.5 text-sm outline-none border transition-all resize-none" style="border-color:#f8bbd0; font-family:'DM Sans',sans-serif; background:#fdf9fb" onfocus="this.style.borderColor='#e91e63'; this.style.boxShadow='0 0 0 3px rgba(233,30,99,0.1)'" onblur="this.style.borderColor='#f8bbd0'; this.style.boxShadow='none'"></textarea>
+          <button class="btn-primary justify-center" onclick="showToast('Message sent! We\'ll get back to you soon.')">
+            <i class="fas fa-paper-plane"></i> Send Message
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer class="py-14 px-5">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 pb-10 border-b" style="border-color:rgba(255,255,255,0.08)">
+      <!-- Brand -->
+      <div class="lg:col-span-1">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#e91e63,#f48fb1)">
+            <i class="fas fa-feather-alt text-white text-sm"></i>
+          </div>
+          <span style="font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:700; color:white">
+            Pink<span style="color:#f48fb1">Quill</span>
+          </span>
+        </div>
+        <p class="text-sm leading-relaxed mb-6" style="color:rgba(255,255,255,0.5)">
+          Your curated destination for books that inspire, entertain, and transform. Discover the story that changes everything.
+        </p>
+        <div class="flex gap-3">
+          <a href="#" class="social-btn"><i class="fab fa-twitter"></i></a>
+          <a href="#" class="social-btn"><i class="fab fa-instagram"></i></a>
+          <a href="#" class="social-btn"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" class="social-btn"><i class="fab fa-pinterest-p"></i></a>
+        </div>
+      </div>
+      <!-- Links -->
+      <div>
+        <h4 class="text-sm font-semibold mb-5" style="color:white">Quick Links</h4>
+        <div class="flex flex-col gap-3">
+          <a href="#home" class="footer-link">Home</a>
+          <a href="#books" class="footer-link">Browse Books</a>
+          <a href="#categories" class="footer-link">Categories</a>
+          <a href="#bestsellers" class="footer-link">Best Sellers</a>
+          <a href="#about" class="footer-link">About Us</a>
+        </div>
+      </div>
+      <!-- Genres -->
+      <div>
+        <h4 class="text-sm font-semibold mb-5" style="color:white">Popular Genres</h4>
+        <div class="flex flex-col gap-3">
+          <a href="#" class="footer-link">Fiction & Literature</a>
+          <a href="#" class="footer-link">Technology</a>
+          <a href="#" class="footer-link">Self Development</a>
+          <a href="#" class="footer-link">Romance</a>
+          <a href="#" class="footer-link">Education</a>
+        </div>
+      </div>
+      <!-- Support -->
+      <div>
+        <h4 class="text-sm font-semibold mb-5" style="color:white">Support</h4>
+        <div class="flex flex-col gap-3">
+          <a href="#contact" class="footer-link">Contact Us</a>
+          <a href="#" class="footer-link">FAQ</a>
+          <a href="#" class="footer-link">Shipping Policy</a>
+          <a href="#" class="footer-link">Returns & Refunds</a>
+          <a href="#" class="footer-link">Privacy Policy</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8">
+      <p class="text-xs" style="color:rgba(255,255,255,0.35)">© <script>document.write(new Date().getFullYear())</script> PinkQuill. All rights reserved.</p>
+      <p class="text-xs" style="color:rgba(255,255,255,0.35)">Crafted with <span style="color:#f48fb1">♥</span> for book lovers everywhere</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+    
+/* ── DATA ── */
+const booksData = [
+  { id:1, title:'The Midnight Library', author:'Matt Haig', price:14.99, cover:'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=500&fit=crop', category:'fiction', badge:'Bestseller', rating:4.8 },
+  { id:2, title:'Atomic Habits', author:'James Clear', price:16.99, cover:'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=400&h=500&fit=crop', category:'self-dev', badge:'Top Pick', rating:4.9 },
+  { id:3, title:'Clean Code', author:'Robert C. Martin', price:29.99, cover:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop', category:'technology', badge:'', rating:4.7 },
+  { id:4, title:'The Notebook', author:'Nicholas Sparks', price:12.99, cover:'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&h=500&fit=crop', category:'romance', badge:'Classic', rating:4.6 },
+  { id:5, title:'Sapiens', author:'Yuval Noah Harari', price:18.99, cover:'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=400&h=500&fit=crop', category:'education', badge:'Award', rating:4.8 },
+  { id:6, title:'The Alchemist', author:'Paulo Coelho', price:13.99, cover:'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400&h=500&fit=crop', category:'fiction', badge:'', rating:4.7 },
+  { id:7, title:'Deep Work', author:'Cal Newport', price:15.99, cover:'https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400&h=500&fit=crop', category:'self-dev', badge:'', rating:4.6 },
+  { id:8, title:'You Deserve Good Things', author:'Ellie Hart', price:11.99, cover:'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=500&fit=crop', category:'romance', badge:'New', rating:4.5 },
+];
+
+const bestSellers = [
+  { id:9, title:'The Psychology of Money', author:'Morgan Housel', price:17.99, cover:'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=300&h=400&fit=crop', rating:4.9 },
+  { id:10, title:'Think & Grow Rich', author:'Napoleon Hill', price:12.99, cover:'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=300&h=400&fit=crop', rating:4.7 },
+  { id:11, title:'Educated', author:'Tara Westover', price:16.99, cover:'https://images.unsplash.com/photo-1550399105-c4db5fb85c18?w=300&h=400&fit=crop', rating:4.8 },
+  { id:12, title:'The Great Gatsby', author:'F. Scott Fitzgerald', price:9.99, cover:'https://images.unsplash.com/photo-1509266272358-7701da638078?w=300&h=400&fit=crop', rating:4.6 },
+  { id:13, title:'Born a Crime', author:'Trevor Noah', price:15.99, cover:'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=300&h=400&fit=crop', rating:4.9 },
+  { id:14, title:'Thinking Fast & Slow', author:'Daniel Kahneman', price:19.99, cover:'https://images.unsplash.com/photo-1476275466078-4007374efbbe?w=300&h=400&fit=crop', rating:4.7 },
+];
+
+let cart = [];
+let currentFilter = 'all';
+let carouselIndex = 0;
+const itemsVisible = () => window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1;
+
+/* ── PRELOADER ── */
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('preloader').classList.add('hidden');
+  }, 2000);
+});
+
+/* ── RENDER BOOKS ── */
+function renderBooks(filter = 'all') {
+  const grid = document.getElementById('books-grid');
+  const filtered = filter === 'all' ? booksData : booksData.filter(b => b.category === filter);
+  grid.innerHTML = filtered.map(book => `
+    <div class="book-card reveal" style="animation-delay:${Math.random()*0.2}s">
+      ${book.badge ? `<span class="badge">${book.badge}</span>` : ''}
+      <div class="book-img">
+        <img src="${book.cover}" alt="${book.title}" loading="lazy" />
+      </div>
+      <div class="p-4">
+        <div class="stars mb-1">${'★'.repeat(Math.floor(book.rating))}${book.rating % 1 ? '½' : ''} <span style="color:#a06070;font-size:0.7rem">(${book.rating})</span></div>
+        <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.05rem; font-weight:700; color:var(--dark); line-height:1.3" class="mb-1">${book.title}</h3>
+        <p class="text-xs mb-3" style="color:#a06070">${book.author}</p>
+        <div class="flex items-center justify-between mb-3">
+          <span style="font-size:1.15rem; font-weight:700; color:#e91e63; font-family:'Cormorant Garamond',serif">$${book.price}</span>
+        </div>
+        <button class="add-cart-btn" onclick="addToCart(${book.id}, this)">
+          <i class="fas fa-shopping-bag text-xs"></i> Add to Cart
+        </button>
+      </div>
+    </div>
+  `).join('');
+  observeReveal();
+}
+
+/* ── RENDER CAROUSEL ── */
+function renderCarousel() {
+  const track = document.getElementById('carousel-track');
+  track.innerHTML = bestSellers.map(book => `
+    <div class="carousel-item">
+      <div style="height:180px; overflow:hidden;">
+        <img src="${book.cover}" alt="${book.title}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.5s" onmouseenter="this.style.transform='scale(1.1)'" onmouseleave="this.style.transform='scale(1)'" />
+      </div>
+      <div class="p-4">
+        <div class="stars text-xs mb-1">${'★'.repeat(Math.floor(book.rating))} <span style="color:#a06070;font-size:0.68rem">${book.rating}</span></div>
+        <h4 style="font-family:'Cormorant Garamond',serif; font-weight:700; font-size:0.95rem; color:var(--dark); line-height:1.3" class="mb-1">${book.title}</h4>
+        <p class="text-xs mb-3" style="color:#a06070">${book.author}</p>
+        <div class="flex items-center justify-between">
+          <span style="font-weight:700; color:#e91e63; font-family:'Cormorant Garamond',serif">$${book.price}</span>
+          <button onclick="addToCart(${book.id}, this)" style="background:linear-gradient(135deg,#e91e63,#f06292); color:white; border:none; border-radius:10px; padding:6px 14px; font-size:0.75rem; font-weight:600; cursor:pointer; transition:all 0.3s" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ── CAROUSEL NAV ── */
+document.getElementById('prev-btn').addEventListener('click', () => {
+  const max = bestSellers.length - itemsVisible();
+  carouselIndex = Math.max(0, carouselIndex - 1);
+  moveCarousel();
+});
+document.getElementById('next-btn').addEventListener('click', () => {
+  const max = bestSellers.length - itemsVisible();
+  carouselIndex = Math.min(max, carouselIndex + 1);
+  moveCarousel();
+});
+function moveCarousel() {
+  const track = document.getElementById('carousel-track');
+  const itemW = 220 + 24;
+  track.style.transform = `translateX(-${carouselIndex * itemW}px)`;
+}
+
+/* ── CART ── */
+function addToCart(id, btn) {
+  const book = [...booksData, ...bestSellers].find(b => b.id === id);
+  if (!book) return;
+  const existing = cart.find(c => c.id === id);
+  if (existing) existing.qty++;
+  else cart.push({ ...book, qty: 1 });
+
+  // Button animation
+  const origHTML = btn.innerHTML;
+  btn.classList.add('added');
+  btn.innerHTML = '<i class="fas fa-check"></i> Added!';
+  setTimeout(() => {
+    btn.classList.remove('added');
+    btn.innerHTML = origHTML;
+  }, 1500);
+
+  updateCartBadge();
+  showToast(`"${book.title}" added to cart!`);
+}
+
+function updateCartBadge() {
+  const count = document.getElementById('cart-count');
+  const total = cart.reduce((s, c) => s + c.qty, 0);
+  count.textContent = total;
+  count.classList.remove('hidden');
+  count.classList.add('pop');
+  setTimeout(() => count.classList.remove('pop'), 400);
+}
+
+function toggleCart() {
+  showToast(`Cart has ${cart.reduce((s,c)=>s+c.qty,0)} item(s) — $${cart.reduce((s,c)=>s+c.price*c.qty,0).toFixed(2)}`);
+}
+
+/* ── TOAST ── */
+let toastTimer;
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+/* ── FILTER ── */
+document.getElementById('filter-btns').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.style.background = 'transparent';
+    b.style.color = 'var(--text)';
+    b.classList.remove('active');
+  });
+  btn.style.background = 'var(--pink-deep)';
+  btn.style.color = 'white';
+  btn.classList.add('active');
+  currentFilter = btn.dataset.filter;
+  renderBooks(currentFilter);
+});
+
+function filterByCategory(cat) {
+  document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('active'));
+  document.querySelector(`[data-cat="${cat}"]`)?.classList.add('active');
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.style.background = 'transparent'; b.style.color = 'var(--text)';
+  });
+  const matchBtn = document.querySelector(`[data-filter="${cat}"]`);
+  if (matchBtn) { matchBtn.style.background = 'var(--pink-deep)'; matchBtn.style.color = 'white'; }
+  renderBooks(cat);
+  document.getElementById('books').scrollIntoView({ behavior:'smooth' });
+}
+
+/* ── MOBILE MENU ── */
+function toggleMenu() {
+  const menu = document.getElementById('mobile-menu');
+  menu.classList.toggle('open');
+  const icon = document.querySelector('#hamburger i');
+  icon.className = menu.classList.contains('open') ? 'fas fa-times text-lg' : 'fas fa-bars text-lg';
+}
+
+/* ── NAVBAR SCROLL ── */
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
+});
+
+/* ── SEARCH ── */
+document.getElementById('search-input').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  const filtered = booksData.filter(b => b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q));
+  const grid = document.getElementById('books-grid');
+  if (q.length < 2) { renderBooks(currentFilter); return; }
+  grid.innerHTML = filtered.map(book => `
+    <div class="book-card">
+      ${book.badge ? `<span class="badge">${book.badge}</span>` : ''}
+      <div class="book-img"><img src="${book.cover}" alt="${book.title}" loading="lazy" /></div>
+      <div class="p-4">
+        <div class="stars mb-1">${'★'.repeat(Math.floor(book.rating))}</div>
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:700;color:var(--dark);line-height:1.3" class="mb-1">${book.title}</h3>
+        <p class="text-xs mb-3" style="color:#a06070">${book.author}</p>
+        <div class="flex items-center justify-between mb-3"><span style="font-size:1.15rem;font-weight:700;color:#e91e63;font-family:'Cormorant Garamond',serif">$${book.price}</span></div>
+        <button class="add-cart-btn" onclick="addToCart(${book.id},this)"><i class="fas fa-shopping-bag text-xs"></i> Add to Cart</button>
+      </div>
+    </div>
+  `).join('') || '<p class="col-span-4 text-center py-12" style="color:#a06070">No books found matching your search.</p>';
+  if (q.length > 0) document.getElementById('books').scrollIntoView({ behavior:'smooth' });
+});
+
+/* ── NEWSLETTER ── */
+function subscribeNewsletter() {
+  const email = document.getElementById('newsletter-email').value;
+  if (!email || !email.includes('@')) {
+    showToast('Please enter a valid email address.');
+    return;
+  }
+  document.getElementById('newsletter-email').value = '';
+  showToast('🎉 You\'re subscribed! Welcome to PinkQuill.');
+}
+
+/* ── SCROLL REVEAL ── */
+function observeReveal() {
+  const els = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+  }, { threshold: 0.12 });
+  els.forEach(el => obs.observe(el));
+}
+
+/* ── INIT ── */
+renderBooks();
+renderCarousel();
+observeReveal();
+
+window.addEventListener('resize', () => {
+  carouselIndex = 0;
+  moveCarousel();
+});
+
+</script>
+</body>
+</html>
